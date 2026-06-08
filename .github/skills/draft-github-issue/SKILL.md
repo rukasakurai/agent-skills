@@ -1,13 +1,10 @@
 ---
 name: draft-github-issue
-description: 'Turn a discussion or analysis into a GitHub issue filed with the gh CLI. Use when capturing a problem as a lean, problem-focused issue that leaves implementation freedom to the assignee.'
-argument-hint: 'Describe the problem or paste the discussion to turn into an issue'
+description: 'File a GitHub issue from a bug report, discussion, or analysis using the gh CLI. Use to create, draft, or open a problem-focused issue that stays lean and leaves implementation freedom to the assignee.'
+argument-hint: Describe the problem or paste the discussion to turn into an issue
 ---
 
 # Draft GitHub Issue
-
-Turn a discussion, bug report, or code analysis into a lean, problem-focused GitHub
-issue and file it with the `gh` CLI.
 
 ## When to Use
 
@@ -19,6 +16,7 @@ issue and file it with the `gh` CLI.
 - Separate the problem from the solution.
 - Keep it lean.
 - State constraints, then leave implementation freedom to the assignee within them.
+- Title states the problem, not the solution (e.g. "Parser rejects valid UTF-8 input", not "Add UTF-8 validation").
 
 ## Issue Template
 
