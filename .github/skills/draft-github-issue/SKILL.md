@@ -43,7 +43,7 @@ The assignee is free to decide how to satisfy the desired behavior within these 
 
 ## Procedure
 
-1. **File the issue** with the `gh` CLI, using inline `--body` with a here-string to
+1. **File the issue** with the `gh` CLI, using inline `--body` with a here-doc (via command substitution) to
    preserve multi-line Markdown:
 
    ```bash
