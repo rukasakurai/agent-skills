@@ -7,6 +7,7 @@ Reusable agent skills that can be installed across repositories and machines.
 | Skill | Description |
 | --- | --- |
 | [`draft-github-issue`](.github/skills/draft-github-issue/SKILL.md) | Turn a discussion or code analysis into a lean, problem-focused GitHub issue and file it with the `gh` CLI. |
+| [`microsoft-foundry-resources`](.github/skills/microsoft-foundry-resources/SKILL.md) | Choose the correct Azure ARM resource provider and `kind` for Microsoft Foundry (formerly Azure AI Foundry) and Azure Machine Learning, across the modern Foundry resource and hub-based (classic) architectures. |
 
 ## Install
 
