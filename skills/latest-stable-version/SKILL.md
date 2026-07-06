@@ -26,16 +26,15 @@ Look up the current versions with the per-ecosystem command, then choose the hig
 | Ecosystem | Command |
 | --- | --- |
 | npm | `npm view <pkg> version` (latest stable) · `npm view <pkg> versions` (all) |
-| PyPI | `curl -s https://pypi.org/pypi/<pkg>/json \| jq -r .info.version` (latest stable) |
-| NuGet | `curl -s https://api.nuget.org/v3-flatcontainer/<pkg-lowercase>/index.json \| jq -r '.versions[]'` |
+| PyPI | `pip index versions <pkg>` |
+| NuGet | `curl -s https://api.nuget.org/v3-flatcontainer/<pkg-lowercase>/index.json` |
 | Go modules | `go list -m -versions <module>` · `go list -m <module>@latest` |
 | ARM/Bicep API version | `az provider show --namespace <Namespace> --query "resourceTypes[?resourceType=='<type>'].apiVersions" -o tsv` |
 | Container image | `crane ls <repo>` or `skopeo list-tags docker://<repo>` |
 
 Notes:
 
-- **PyPI** `.info.version` is the latest stable; use `.releases | keys` to see every version.
-- **NuGet** lists ascending; the last entry without a `-` suffix is the latest stable.
+- **NuGet** returns a JSON `versions` array in ascending order; the last entry without a `-` suffix is the latest stable.
 - **ARM/Bicep** stable API versions are plain dates (`2024-10-01`); anything ending in `-preview` is not stable.
 - **Container images** — prefer an immutable stable tag over `latest`; pin by digest when reproducibility matters.
 
