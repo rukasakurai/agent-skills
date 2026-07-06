@@ -13,7 +13,7 @@ argument-hint: Name the dependency (and ecosystem) whose version you are pinning
 
 ## Rule
 
-Pick the **latest stable** release. Treat versions with `-preview`, `-rc`, `-beta`, `-alpha`, `-dev`, or a `-` pre-release suffix as **not stable**.
+Pick the **latest stable** release. Treat SemVer pre-releases (anything after the first `-`, e.g. `-rc.1`, `-beta`, `-alpha`, `-dev`) and ecosystem-specific preview markers (e.g. ARM `-preview`, PyPI `a`/`b`/`rc`/`.dev`) as **not stable**.
 
 Use an older or preview version only with an explicit, written reason (e.g. a feature exists only in preview, or a newer stable breaks a required contract).
 
