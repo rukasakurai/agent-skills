@@ -21,7 +21,7 @@ A version change is a behavior change: **re-run the relevant build and tests** a
 
 ## Verify Before Pinning
 
-Look up the current versions with the per-ecosystem command, then choose the highest one without a pre-release suffix.
+Look up the current versions with the per-ecosystem command, then choose the highest stable version (excluding pre-releases).
 
 | Ecosystem | Command |
 | --- | --- |
