@@ -6,6 +6,7 @@ Reusable agent skills that can be installed across repositories and machines.
 
 | Skill | Description |
 | --- | --- |
+| [`authoring-agent-skills`](skills/authoring-agent-skills/SKILL.md) | Create, update, or retire an Agent Skill so its description reliably triggers and its body stays lean — covering common mistakes, when to read the official docs, and the skill lifecycle. |
 | [`draft-github-issue`](skills/draft-github-issue/SKILL.md) | Turn a discussion or code analysis into a lean, problem-focused GitHub issue and file it with the `gh` CLI. |
 | [`microsoft-foundry-resources`](skills/microsoft-foundry-resources/SKILL.md) | Choose the correct Azure ARM resource provider and `kind` for Microsoft Foundry (formerly Azure AI Foundry) and Azure Machine Learning, across the modern Foundry resource and hub-based (classic) architectures. |
 | [`latest-stable-version`](skills/latest-stable-version/SKILL.md) | Verify and select the latest stable (non-preview) release before pinning or bumping a dependency version — ARM/Bicep API versions, NuGet, npm, PyPI, Go modules, or container images. |
