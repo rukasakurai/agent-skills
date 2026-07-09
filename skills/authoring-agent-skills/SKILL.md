@@ -6,12 +6,6 @@ argument-hint: Describe the skill you are creating, updating, or retiring
 
 # Authoring Agent Skills
 
-## When to Use
-
-- You are creating, editing, or reviewing a `SKILL.md`.
-- You are wording or optimizing a skill `description`.
-- You are deciding whether something belongs in a skill at all, or whether to split, edit, or retire one.
-
 ## What an Agent Skill Actually Is
 
 - A skill is a **folder**, not just `SKILL.md`. It can also carry `references/` (Markdown loaded on demand), `scripts/` (deterministic code the model can run), and `assets/` (templates, files). Put detail there instead of bloating `SKILL.md`.
