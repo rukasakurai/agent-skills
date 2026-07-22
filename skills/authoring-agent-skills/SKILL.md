@@ -19,7 +19,6 @@ argument-hint: Describe the skill you are creating, updating, or retiring
 - Treating a skill as documentation rather than a lever on model behavior.
 - Adding content by default. Deleting or editing is often the higher-value move; verbosity costs context and tokens.
 - Stating what the model already knows (general programming, common-sense advice). Keep only what it would otherwise get wrong.
-- Shipping a skill without checking it actually beats the no-skill baseline — a quick with/without run often exposes instructions that change nothing, or a task the model already handles unaided.
 - Shipping a skill without thinking about how it will be shared and maintained.
 
 ## Writing the Description (the highest-leverage part)
@@ -35,11 +34,13 @@ These are authoritative; read the relevant one before committing rather than rep
 - [Evaluating skill output quality](https://agentskills.io/skill-creation/evaluating-skills) — when you cannot tell whether a skill is actually improving responses.
 - [Using scripts in skills](https://agentskills.io/skill-creation/using-scripts) — before adding `scripts/`, or when an operation must be deterministic rather than model-generated.
 
-## Verifying a Skill Earns Its Keep
+## Before You Ship (or Change) a Skill
 
-- **Check it against the no-skill baseline.** Run 2–3 realistic prompts with and without the skill, in fresh contexts, and compare. This is the cheapest way to catch a skill that reads well but changes nothing — or is silently broken. Escalate to the full `evals/` harness (see "Evaluating skill output quality" above) only when a manual A/B can't answer the question.
-- **Weigh cost, not just quality.** A skill spends context tokens (and any bundled-script tool calls) on every use. When quality ties, latency and token/credit cost decide whether it earns its place — and the honest result is sometimes to cut it. Note that clean per-run credit attribution isn't well supported today, so this is often a rough comparison.
-- **Keep eval artifacts out of the shipped folder.** `gh skill install` copies the *whole* skill directory to consumers, so commit only small, durable files (e.g. `evals/evals.json`, a short dated results summary), and keep bulky run outputs in a gitignored workspace *beside* the skill, not inside it.
+Run these before opening the PR, and note the outcome in the PR description:
+
+- **Do the with/without check.** Run 2–3 realistic prompts with and without the skill in fresh contexts and compare. This is the cheapest way to catch a skill that reads well but changes nothing — or is silently broken. Match the effort to the change: a quick manual A/B is usually enough; reach for a full `evals/` harness only when it can't answer the question; and for a small prose edit, a reasoned "a harness isn't proportionate here, because…" is a valid outcome — but *decide* it, don't skip it.
+- **Decide on cost, not just quality.** A skill spends context tokens (and any bundled-script tool calls) every use, so when quality ties, latency and token/credit cost decide whether it earns its place — sometimes the honest answer is to cut it. (Per-run credit cost is measurable by running isolated sessions, but not attributable within a mixed run or to a sub-agent.)
+- **Keep eval artifacts out of the shipped folder.** `gh skill install` copies the *whole* skill directory to consumers, so commit only small, durable files (e.g. `evals/evals.json`, a short dated results summary) and keep bulky run outputs in a gitignored workspace *beside* the skill, not inside it.
 
 ## Lifecycle
 
