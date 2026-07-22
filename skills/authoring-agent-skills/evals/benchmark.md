@@ -8,8 +8,7 @@
 
 Whether this skill actually changes behavior — for a meta/authoring skill the
 payoff is behavioral (does the agent *run* an evaluation), not a cost/latency
-number — so this tracks pass/fail across skill versions and models rather than
-credits.
+number — so this tracks pass/fail versus a no-skill baseline rather than credits.
 
 Method: run the eval prompt in fresh isolated sessions with the skill body in
 context, compare against a no-skill baseline, and check each assertion against
@@ -25,12 +24,13 @@ scratch in the gitignored `skills/authoring-agent-skills-workspace/`.
 Given this skill and asked to "evaluate a proposed skill", does the agent *run*
 a with/without measurement, or just hypothesize from inspection?
 
-| arm (skill version, model) | runs the comparison | evidence-grounded | correct ship/cut call |
+| arm, `claude-sonnet-4.6` | runs the comparison | evidence-grounded | correct ship/cut call |
 | --- | --- | --- | --- |
-| baseline (no skill), `claude-haiku-4.5` | no | no | wrong ("ship it") |
-| v1-v2 descriptive, `claude-haiku-4.5` | no | no | right, from reasoning |
-| v3 imperative + recipe, `claude-haiku-4.5` | no (surfaces the command) | no | right |
-| v3 imperative + recipe, `claude-sonnet-4.6` | **yes** (ran both sessions) | **yes** (quoted outputs) | right; caught a regression |
+| baseline (no skill) | no | no | wrong ("ship it") |
+| with skill | **yes** (ran both sessions) | **yes** (quoted outputs) | right; caught a regression baseline missed |
+
+On a weaker model (`claude-haiku-4.5`) the with-skill arm surfaces the exact
+command but does not run it, so drive skill evaluation with a capable model.
 
 ### Eval `eval-artifact-naming-and-placement` (does the skill teach the convention?)
 
@@ -50,13 +50,11 @@ cheaper, without filesystem spelunking — not unlocking a new capability.
 
 ## How to read this
 
-- **Prose framing decides triggering:** descriptive "you should evaluate" prose
-  never triggered a measurement; an imperative "run it now" step plus a concrete
-  environment recipe did.
 - **Model capability decides execution:** a capable model ran the comparison
   autonomously; a weak one only surfaced the command for a human to run.
-- **Running beats hypothesizing:** the capable arm found the drafted skill caused
-  a regression (dropped a conventional-commit prefix) that inspection missed.
+- **Running beats hypothesizing:** with the skill, the capable arm found the
+  drafted test skill caused a regression (dropped a conventional-commit prefix)
+  that inspection alone missed.
 
 **Decision cue:** drive skill authoring/evaluation with a capable model; on a
 weak model, expect to run the surfaced command yourself.
