@@ -14,6 +14,8 @@ argument-hint: Name the product area (Azure and/or GitHub) and the date window y
 
 This skill explains how to obtain and read updates. Keep repo-specific cross-referencing (e.g. comparing against pinned Bicep API versions) in the consuming repo.
 
+Cost/latency: using this skill is roughly cost- and latency-neutral versus not using it (it ties on quality while being no more expensive and typically faster) — see `evals/benchmark.md` for measured numbers and their date/model.
+
 ## Fetching Updates
 
 Two stdlib-only Python scripts (no `pip install`) do the deterministic work — pagination, date-window filtering, and lifecycle normalization — and emit a normalized JSON array. Prefer them over hand-rolling requests.
