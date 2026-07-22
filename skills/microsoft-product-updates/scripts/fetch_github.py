@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Fetch GitHub changelog updates within a date window as JSON.
 
-Parses the GitHub changelog RSS feed (there is no JSON API), filters items by
-publication date, and emits a normalized JSON array to stdout. GitHub has no
-formal lifecycle field, so the stage is inferred from title/body wording and
-returned as a best-effort guess.
+Parses the GitHub changelog RSS feed (there is no JSON API), paging back
+through the feed (?paged=N, ~10 items per page) until entries fall before the
+requested start date, filters items by publication date, and emits a
+normalized JSON array to stdout. GitHub has no formal lifecycle field, so the
+stage is inferred from title/body wording and returned as a best-effort guess.
 
 Stdlib only. Usage:
     python fetch_github.py --since 2026-01-01 [--until 2026-07-01]
-                           [--keyword copilot] [--year 2026]
+                           [--keyword copilot] [--label copilot]
+                           [--max-pages 50]
 """
 import argparse
 import json
@@ -21,6 +23,7 @@ from email.utils import parsedate_to_datetime
 from xml.etree import ElementTree
 
 FEED = "https://github.blog/changelog/feed/"
+LABEL_FEED = "https://github.blog/changelog/label/{label}/feed/"
 CONTENT_NS = "{http://purl.org/rss/1.0/modules/content/}encoded"
 
 # Ordered most-specific first; first match wins.
@@ -65,10 +68,38 @@ def fetch(url, retries=4):
                 url, headers={"User-Agent": "agent-skills/microsoft-product-updates"})
             with urllib.request.urlopen(req, timeout=60) as resp:
                 return ElementTree.parse(resp).getroot()
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:  # past the last page
+                return None
+            last = exc
+            time.sleep(2 ** attempt)
         except (urllib.error.URLError, TimeoutError) as exc:
             last = exc
             time.sleep(2 ** attempt)
     raise last
+
+
+def paged_items(base_feed, since, max_pages):
+    """Yield items newest-first, paging (?paged=N) until entries predate `since`
+    or the feed runs out. GitHub's feed returns ~10 items per page."""
+    for page in range(1, max_pages + 1):
+        sep = "&" if "?" in base_feed else "?"
+        url = base_feed if page == 1 else f"{base_feed}{sep}paged={page}"
+        root = fetch(url)
+        if root is None:
+            return
+        found = False
+        oldest = None
+        for it in items(root):
+            found = True
+            pub = it["_pub"]
+            if pub is not None and (oldest is None or pub < oldest):
+                oldest = pub
+            yield it
+        if not found:
+            return
+        if oldest is not None and oldest < since:
+            return
 
 
 def items(root):
@@ -96,8 +127,9 @@ def main():
     ap.add_argument("--until", help="End date (inclusive), YYYY-MM-DD.")
     ap.add_argument("--keyword", action="append", default=[],
                     help="Filter to a keyword in title/summary (repeatable, case-insensitive).")
-    ap.add_argument("--year", type=int, action="append", default=[],
-                    help="Fetch a specific year's archive feed (repeatable). Defaults to the current feed.")
+    ap.add_argument("--label", help="Use a changelog label feed (e.g. copilot, actions) instead of the full feed.")
+    ap.add_argument("--max-pages", type=int, default=50,
+                    help="Safety cap on how many feed pages to walk back (default 50).")
     args = ap.parse_args()
 
     try:
@@ -111,20 +143,19 @@ def main():
         print("error: dates must be YYYY-MM-DD", file=sys.stderr)
         return 2
 
-    urls = [f"https://github.blog/changelog/{y}/feed/" for y in args.year] or [FEED]
+    base_feed = LABEL_FEED.format(label=args.label) if args.label else FEED
     wants = [k.casefold() for k in args.keyword]
 
     out = []
-    for url in urls:
-        for it in items(fetch(url)):
-            pub = it.pop("_pub")
-            if pub is None or pub < since or (until and pub > until):
+    for it in paged_items(base_feed, since, args.max_pages):
+        pub = it.pop("_pub")
+        if pub is None or pub < since or (until and pub > until):
+            continue
+        if wants:
+            hay = f"{it['title']} {it['summary']}".casefold()
+            if not any(w in hay for w in wants):
                 continue
-            if wants:
-                hay = f"{it['title']} {it['summary']}".casefold()
-                if not any(w in hay for w in wants):
-                    continue
-            out.append(it)
+        out.append(it)
 
     out.sort(key=lambda x: x["published"] or "", reverse=True)
     json.dump(out, sys.stdout, indent=2, ensure_ascii=False)

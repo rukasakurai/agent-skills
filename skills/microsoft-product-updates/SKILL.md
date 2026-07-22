@@ -23,7 +23,7 @@ Two stdlib-only Python scripts (no `pip install`) do the deterministic work — 
 python scripts/fetch_azure.py --since 2026-01-01 [--until 2026-07-01] [--product "Azure Functions"]
 
 # GitHub changelog entries published in a window, optionally filtered by keyword
-python scripts/fetch_github.py --since 2026-01-01 [--until 2026-07-01] [--keyword copilot] [--year 2026]
+python scripts/fetch_github.py --since 2026-01-01 [--until 2026-07-01] [--keyword copilot] [--label copilot]
 ```
 
 Each output item carries a normalized `stage` (`ga`, `public-preview`, `private-preview`, `in-development`, `retirement`, plus `review`/`unknown`), the source `title`/`link`, dates, and the raw signals. Azure items whose signals disagree get `stage: "review"` with a `review.reason`; resolve those by reading the linked update rather than trusting one signal.
@@ -63,10 +63,10 @@ Note: `modified`/`created` use 7-digit fractional seconds (e.g. `2026-07-20T15:0
 
 ## GitHub (RSS feed)
 
-No structured API — parse the RSS. The feed is the current year's archive; older years live at `https://github.blog/changelog/YYYY/feed/`.
+No structured API — parse the RSS. **The feed returns only ~10 items per page**, so a window longer than a few days must page back with `?paged=2`, `?paged=3`, … until `<pubDate>` predates your window (a missing page returns 404 — stop there). `fetch_github.py` does this. Scope to a topic with the label feed `https://github.blog/changelog/label/<label>/feed/` (e.g. `copilot`).
 
 ```sh
-curl -s https://github.blog/changelog/feed/
+curl -s 'https://github.blog/changelog/feed/?paged=2'
 ```
 
 Per `<item>`: `<title>`, `<link>`, `<pubDate>` (RFC 822 — filter your window on this), `<category>`, and `<content:encoded>` (full HTML). GitHub has no formal ring field; infer lifecycle from title/body wording ("generally available", "public preview", "deprecated", "sunset", "retired").
