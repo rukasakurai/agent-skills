@@ -1,0 +1,17 @@
+{
+  "skill_name": "microsoft-product-updates",
+  "notes": "Run each prompt in a fresh context twice — once with the skill available, once without — and compare (see agentskills.io/skill-creation/evaluating-skills). The 'without' run must not be told the skill exists. Use only public feeds; no secrets.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this repository and determine whether anything in it needs updating based on Microsoft product updates (Azure and GitHub) from the past month. The repo pins API/SDK versions and makes GA/preview/retirement claims that can go stale. For each potentially stale item, cite the specific Microsoft update. Read-only; do not modify files.",
+      "expected_output": "A findings report listing repo items that may be stale, each with the specific Microsoft update (source/link) that affects it and a confidence level; explicitly names which authoritative feeds/endpoints were used to get 'what changed in the last month'. Success signal for the skill: reached the Azure release communications JSON API and cited a specific update, rather than failing to a docs page.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "What Azure updates in the last 30 days are still only in public or private preview (not GA)? List them with their lifecycle stage.",
+      "expected_output": "A list of recent Azure updates filtered to preview stages, each labeled with a normalized lifecycle stage, sourced from the release communications API paged by modified date. Edge case: items whose signals disagree (title vs status vs availability ring) should be surfaced as ambiguous/needs-review rather than silently assigned a stage."
+    }
+  ]
+}
