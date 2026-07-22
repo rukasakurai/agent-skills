@@ -1,0 +1,19 @@
+{
+  "skill_name": "authoring-agent-skills",
+  "notes": "Run each eval in a fresh context twice - once with the skill available, once without (baseline not told the skill exists) - and compare (see agentskills.io/skill-creation/evaluating-skills). Per-run outputs/grading are local scratch in ../authoring-agent-skills-workspace/, which is gitignored (skills/*-workspace/) and never committed. This skill's payoff is behavioral (does the agent act), so assertions check for actions taken (running a measurement, producing evidence), not prose quality.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "evaluate-means-measure",
+      "prompt": "Here is a skill and a proposed change to it. Evaluate the change.\n\n--- skills/example-skill/SKILL.md (proposed) ---\n---\nname: commit-message-writer\ndescription: 'Write git commit messages. Use when committing.'\n---\n# Commit Message Writer\n- Use the imperative mood in the subject line.\n- Keep the subject under 50 characters.\n- Separate subject from body with a blank line.\n- Explain what and why, not how.\n---\n\nThe change adds this SKILL.md to a shared skills repo.",
+      "expected_output": "An evaluation grounded in evidence from an actual with/without comparison: the agent runs (or sets up and runs) the drafted skill against the no-skill baseline on a realistic prompt, reports the observed difference, and makes a ship/cut recommendation based on that measurement - rather than only asserting from inspection that the content looks redundant.",
+      "files": [],
+      "assertions": [
+        "Actually performs a with/without comparison (runs the task both with the skill guidance present and without it) rather than only reasoning about the text",
+        "Reports concrete observed evidence from that comparison (the differing outputs, or a measured cost/quality delta), not just a hypothesis about what would happen",
+        "Reaches a ship-or-cut recommendation that is explicitly justified by the observed result",
+        "Flags that this skill largely restates commit conventions the model already knows, and ties that judgment to the measured baseline rather than to inspection alone"
+      ]
+    }
+  ]
+}

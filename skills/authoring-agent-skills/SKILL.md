@@ -36,10 +36,15 @@ These are authoritative; read the relevant one before committing rather than rep
 
 ## Before You Ship (or Change) a Skill
 
-Run these before opening the PR, and note the outcome in the PR description:
+When you are asked to author, evaluate, or change a skill, run the check in this same turn and let its result drive your verdict — do not hand back a verdict in place of the check.
 
-- **Do the with/without check.** Run 2–3 realistic prompts with and without the skill in fresh contexts and compare. This is the cheapest way to catch a skill that reads well but changes nothing — or is silently broken. Match the effort to the change: a quick manual A/B is usually enough; reach for a full `evals/` harness only when it can't answer the question; and for a small prose edit, a reasoned "a harness isn't proportionate here, because…" is a valid outcome — but *decide* it, don't skip it.
-- **Decide on cost, not just quality.** A skill spends context tokens (and any bundled-script tool calls) every use, so when quality ties, latency and token/credit cost decide whether it earns its place — sometimes the honest answer is to cut it. (Per-run credit cost is measurable by running isolated sessions, but not attributable within a mixed run or to a sub-agent.)
+- **Run the with/without comparison now — don't predict it.** Spawn two clean runs of one realistic prompt and compare the *observed* outputs. Predicting "this changes nothing" is the exact failure this step prevents. In this environment a clean run is a fresh headless session:
+  ```bash
+  copilot -p "<task>"                     --session-id "$(uuidgen)" --model <m> --allow-all-tools --no-color   # baseline
+  copilot -p "<SKILL.md body>\n\n<task>"  --session-id "$(uuidgen)" --model <m> --allow-all-tools --no-color   # with skill
+  ```
+  (Agents with subagents, e.g. Claude Code, get the same isolation via child tasks — see the eval doc. Whether the agent runs this autonomously depends on model capability, so drive it with a capable model.) Match effort to the change: one or two prompts is usually enough; reach for a full `evals/` harness only when a quick A/B can't answer the question; for a tiny prose edit, concluding "a harness isn't proportionate here, because…" is fine — but conclude it after looking, don't skip the step.
+- **Decide on cost, not just quality.** A skill spends context tokens (and any bundled-script tool calls) every use, so when quality ties, latency and token/credit cost decide whether it earns its place — sometimes the honest answer is to cut it.
 - **Keep eval artifacts out of the shipped folder.** `gh skill install` copies the *whole* skill directory to consumers, so commit only small, durable files (e.g. `evals/evals.json`, a short dated results summary) and keep bulky run outputs in a gitignored workspace *beside* the skill, not inside it.
 
 ## Lifecycle
