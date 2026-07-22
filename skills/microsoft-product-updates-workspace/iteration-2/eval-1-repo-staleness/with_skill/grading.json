@@ -1,9 +1,0 @@
-{
-  "assertion_results": [
-    {"text": "Names the Azure release communications API among sources used", "passed": true, "evidence": "Sources list: www.microsoft.com/releasecommunications/api/v2/azure?$count=true&$top=100..."},
-    {"text": "Cites at least one specific Azure update with a link or numeric id", "passed": true, "evidence": "Cites id=564312 (and 563701) with azure.microsoft.com/updates links"},
-    {"text": "GitHub coverage reaches back to on/before 2026-07-05", "passed": true, "evidence": "Oldest GitHub entry considered: 2026-06-18T18:04:33Z (paged RSS ?paged=2..10)"},
-    {"text": "Performs the analysis read-only", "passed": true, "evidence": "'Read-only review complete; I made no repo changes.'"}
-  ],
-  "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}
-}

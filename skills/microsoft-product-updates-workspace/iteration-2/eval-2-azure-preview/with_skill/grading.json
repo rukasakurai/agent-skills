@@ -1,9 +1,0 @@
-{
-  "assertion_results": [
-    {"text": "Lists Azure updates each labeled with a lifecycle stage", "passed": true, "evidence": "13 items each labeled 'Public preview'"},
-    {"text": "Every listed item is a preview stage; none GA", "passed": true, "evidence": "All 13 public preview; excluded 565480 as GA"},
-    {"text": "Names the Azure release communications API as the source", "passed": true, "evidence": "www.microsoft.com/releasecommunications/api/v2/azure?..."},
-    {"text": "Surfaces conflicting/ambiguous lifecycle signals rather than silently assigning", "passed": true, "evidence": "Flagged 567651/563331/566948 (status Launched vs preview) and excluded 565480"}
-  ],
-  "summary": {"passed": 4, "failed": 0, "total": 4, "pass_rate": 1.0}
-}

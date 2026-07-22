@@ -1,7 +1,0 @@
-{"assertion_results":[
- {"text":"Lists Azure updates each labeled with a lifecycle stage","passed":true,"evidence":"10 confirmed preview items listed with stage"},
- {"text":"Every listed item is a preview stage; none GA","passed":true,"evidence":"all 10 public preview; GA items excluded"},
- {"text":"Names the Azure release communications API as source","passed":true,"evidence":"www.microsoft.com/releasecommunications/api/v2/azure via fetch_azure.py"},
- {"text":"Surfaces conflicting/ambiguous signals for review","passed":true,"evidence":"13 items flagged for review as ambiguous"},
- {"text":"Does not significantly undercount preview items in window","passed":true,"evidence":"10 confirmed + 13 flagged; converges with baseline's 10 confirmed (no material omission)"}
-],"summary":{"passed":5,"failed":0,"total":5}}

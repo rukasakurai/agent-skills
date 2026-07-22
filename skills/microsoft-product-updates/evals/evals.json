@@ -1,6 +1,6 @@
 {
   "skill_name": "microsoft-product-updates",
-  "notes": "Run each eval in a fresh context twice - once with the skill available, once without (baseline not told the skill exists) - and compare (see agentskills.io/skill-creation/evaluating-skills). Use only public feeds; no secrets. Per-run outputs, grading, and benchmark live OUTSIDE the skill folder (in ../microsoft-product-updates-workspace/) so 'gh skill install' does not ship them.",  "evals": [
+  "notes": "Run each eval in a fresh context twice - once with the skill available, once without (baseline not told the skill exists) - and compare (see agentskills.io/skill-creation/evaluating-skills). Use only public feeds; no secrets. Per-run outputs/grading/benchmark are local scratch in ../microsoft-product-updates-workspace/, which is gitignored (skills/*-workspace/) and never committed; only the distilled evals/benchmark.md is committed and shipped.",  "evals": [
     {
       "id": 1,
       "name": "repo-staleness-review",
