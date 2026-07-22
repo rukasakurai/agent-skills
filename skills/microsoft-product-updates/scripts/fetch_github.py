@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Fetch GitHub changelog updates within a date window as JSON.
 
-Parses the GitHub changelog RSS feed (there is no JSON API), paging back
-through the feed (?paged=N, ~10 items per page) until entries fall before the
-requested start date, filters items by publication date, and emits a
-normalized JSON array to stdout. GitHub has no formal lifecycle field, so the
-stage is inferred from title/body wording and returned as a best-effort guess.
+Uses the GitHub Blog WordPress REST API (the changelog is a WordPress custom
+post type), which returns structured JSON, up to 100 items per page, and
+supports server-side date filtering (`after`/`before`) and label filtering.
+This is cleaner and faster than scraping the RSS feed. GitHub has no formal
+lifecycle field, so the stage is inferred from title/body wording as a
+best-effort guess.
 
 Stdlib only. Usage:
     python fetch_github.py --since 2026-01-01 [--until 2026-07-01]
@@ -17,14 +18,14 @@ import json
 import re
 import sys
 import time
+import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
-from xml.etree import ElementTree
 
-FEED = "https://github.blog/changelog/feed/"
-LABEL_FEED = "https://github.blog/changelog/label/{label}/feed/"
-CONTENT_NS = "{http://purl.org/rss/1.0/modules/content/}encoded"
+API = "https://github.blog/wp-json/wp/v2/changelogs"
+LABEL_API = "https://github.blog/wp-json/wp/v2/label"
+PER_PAGE = 100
 
 # Ordered most-specific first; first match wins.
 STAGE_PATTERNS = (
@@ -38,6 +39,9 @@ STAGE_PATTERNS = (
 
 def strip_html(html):
     text = re.sub(r"(?s)<[^>]+>", " ", html or "")
+    text = re.sub(r"&#8217;|&#8216;", "'", text)
+    text = re.sub(r"&#8220;|&#8221;", '"', text)
+    text = re.sub(r"&amp;", "&", text)
     text = re.sub(r"\s+", " ", text)
     return text.strip()
 
@@ -50,27 +54,28 @@ def infer_stage(title, body):
     return "unknown"
 
 
-def parse_date(value):
+def parse_gmt(value):
+    """WordPress *_gmt fields are ISO 8601 without timezone; treat as UTC."""
+    if not value:
+        return None
     try:
-        dt = parsedate_to_datetime(value)
-    except (TypeError, ValueError):
+        dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+    except ValueError:
         return None
-    if dt is None:
-        return None
-    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    return dt.replace(tzinfo=timezone.utc)
 
 
-def fetch(url, retries=4):
+def get_json(url, retries=4):
     last = None
     for attempt in range(retries):
         try:
             req = urllib.request.Request(
                 url, headers={"User-Agent": "agent-skills/microsoft-product-updates"})
             with urllib.request.urlopen(req, timeout=60) as resp:
-                return ElementTree.parse(resp).getroot()
+                return json.load(resp), resp.headers
         except urllib.error.HTTPError as exc:
-            if exc.code == 404:  # past the last page
-                return None
+            if exc.code == 400:  # page beyond last -> WP returns 400
+                return [], {}
             last = exc
             time.sleep(2 ** attempt)
         except (urllib.error.URLError, TimeoutError) as exc:
@@ -79,46 +84,53 @@ def fetch(url, retries=4):
     raise last
 
 
-def paged_items(base_feed, since, max_pages):
-    """Yield items newest-first, paging (?paged=N) until entries predate `since`
-    or the feed runs out. GitHub's feed returns ~10 items per page."""
+def resolve_label(slug):
+    q = urllib.parse.urlencode({"slug": slug, "per_page": 100})
+    data, _ = get_json(f"{LABEL_API}?{q}")
+    for term in data:
+        if term.get("slug") == slug:
+            return term["id"]
+    if data:  # fall back to first match
+        return data[0]["id"]
+    raise SystemExit(f"error: no changelog label matching '{slug}'")
+
+
+def paged_items(since, until, label_id, max_pages):
+    """Yield changelog posts using server-side date filtering, newest first."""
+    params = {
+        "per_page": PER_PAGE,
+        "orderby": "date",
+        "order": "desc",
+        "after": since.strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+    if until:
+        params["before"] = until.strftime("%Y-%m-%dT%H:%M:%S")
+    if label_id is not None:
+        params["label"] = label_id
     for page in range(1, max_pages + 1):
-        sep = "&" if "?" in base_feed else "?"
-        url = base_feed if page == 1 else f"{base_feed}{sep}paged={page}"
-        root = fetch(url)
-        if root is None:
+        params["page"] = page
+        data, _ = get_json(f"{API}?{urllib.parse.urlencode(params)}")
+        if not data:
             return
-        found = False
-        oldest = None
-        for it in items(root):
-            found = True
-            pub = it["_pub"]
-            if pub is not None and (oldest is None or pub < oldest):
-                oldest = pub
-            yield it
-        if not found:
-            return
-        if oldest is not None and oldest < since:
+        for post in data:
+            yield post
+        if len(data) < PER_PAGE:
             return
 
 
-def items(root):
-    for item in root.iter("item"):
-        title = (item.findtext("title") or "").strip()
-        link = (item.findtext("link") or "").strip()
-        pub = parse_date(item.findtext("pubDate"))
-        categories = [c.text.strip() for c in item.findall("category") if c.text]
-        encoded = item.findtext(CONTENT_NS) or item.findtext("description") or ""
-        body = strip_html(encoded)
-        yield {
-            "title": title,
-            "link": link,
-            "published": pub.isoformat() if pub else None,
-            "_pub": pub,
-            "categories": categories,
-            "stage": infer_stage(title, body),
-            "summary": body[:500],
-        }
+def normalize(post):
+    title = strip_html((post.get("title") or {}).get("rendered", ""))
+    body = strip_html((post.get("content") or {}).get("rendered", ""))
+    pub = parse_gmt(post.get("date_gmt"))
+    return {
+        "title": title,
+        "link": post.get("link", ""),
+        "published": pub.isoformat() if pub else None,
+        "_pub": pub,
+        "categories": post.get("label", []),
+        "stage": infer_stage(title, body),
+        "summary": body[:500],
+    }
 
 
 def main():
@@ -127,9 +139,9 @@ def main():
     ap.add_argument("--until", help="End date (inclusive), YYYY-MM-DD.")
     ap.add_argument("--keyword", action="append", default=[],
                     help="Filter to a keyword in title/summary (repeatable, case-insensitive).")
-    ap.add_argument("--label", help="Use a changelog label feed (e.g. copilot, actions) instead of the full feed.")
+    ap.add_argument("--label", help="Scope to a changelog label slug (e.g. copilot, actions).")
     ap.add_argument("--max-pages", type=int, default=50,
-                    help="Safety cap on how many feed pages to walk back (default 50).")
+                    help="Safety cap on how many API pages to fetch (default 50).")
     args = ap.parse_args()
 
     try:
@@ -143,11 +155,12 @@ def main():
         print("error: dates must be YYYY-MM-DD", file=sys.stderr)
         return 2
 
-    base_feed = LABEL_FEED.format(label=args.label) if args.label else FEED
+    label_id = resolve_label(args.label) if args.label else None
     wants = [k.casefold() for k in args.keyword]
 
     out = []
-    for it in paged_items(base_feed, since, args.max_pages):
+    for post in paged_items(since, until, label_id, args.max_pages):
+        it = normalize(post)
         pub = it.pop("_pub")
         if pub is None or pub < since or (until and pub > until):
             continue

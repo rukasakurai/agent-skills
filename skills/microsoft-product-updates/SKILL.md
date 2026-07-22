@@ -1,6 +1,6 @@
 ---
 name: microsoft-product-updates
-description: 'Fetch and interpret recent Microsoft product updates (Azure and GitHub) from their authoritative change feeds — the Azure release communications JSON API and the GitHub changelog RSS feed — reading lifecycle signals (GA, public/private preview, in development, retirement) consistently. Use when you need "what recently changed for product Y" over a date window, e.g. checking whether pinned versions or GA/preview claims in a repo have gone stale.'
+description: 'Fetch and interpret recent Microsoft product updates (Azure and GitHub) from their authoritative change feeds — the Azure release communications JSON API and the GitHub changelog WordPress REST API — reading lifecycle signals (GA, public/private preview, in development, retirement) consistently. Use when you need "what recently changed for product Y" over a date window, e.g. checking whether pinned versions or GA/preview claims in a repo have gone stale.'
 argument-hint: Name the product area (Azure and/or GitHub) and the date window you care about
 ---
 
@@ -35,7 +35,7 @@ The sources and fields are documented below so you can query them directly (e.g.
 | Product | Endpoint | Shape |
 | --- | --- | --- |
 | Azure | `https://www.microsoft.com/releasecommunications/api/v2/azure` | Paginated OData JSON |
-| GitHub | `https://github.blog/changelog/feed/` | RSS 2.0 (no JSON API) |
+| GitHub | `https://github.blog/wp-json/wp/v2/changelogs` | WordPress REST JSON |
 
 Both are public; no auth or secrets.
 
@@ -61,15 +61,26 @@ These signals can disagree (e.g. `title` says `Public Preview` while `status` is
 
 Note: `modified`/`created` use 7-digit fractional seconds (e.g. `2026-07-20T15:09:43.6800215Z`), which `datetime.fromisoformat` rejects before Python 3.11 — truncate to 6 digits before parsing (the script handles this).
 
-## GitHub (RSS feed)
+## GitHub (WordPress REST API)
 
-No structured API — parse the RSS. **The feed returns only ~10 items per page**, so a window longer than a few days must page back with `?paged=2`, `?paged=3`, … until `<pubDate>` predates your window (a missing page returns 404 — stop there). `fetch_github.py` does this. Scope to a topic with the label feed `https://github.blog/changelog/label/<label>/feed/` (e.g. `copilot`).
+The changelog is a WordPress custom post type, so query its REST API directly — structured JSON, up to 100 items/page, with **server-side date and label filtering**. No auth. `fetch_github.py` uses this.
 
 ```sh
-curl -s 'https://github.blog/changelog/feed/?paged=2'
+# Entries in a window (after/before filter on post date; page beyond the last returns HTTP 400)
+curl -s 'https://github.blog/wp-json/wp/v2/changelogs?per_page=100&after=2026-06-18T00:00:00&before=2026-07-21T23:59:59&orderby=date&order=desc'
+# Scope to a label: resolve its term id, then pass ?label=<id>
+curl -s 'https://github.blog/wp-json/wp/v2/label?slug=copilot'   # -> id, e.g. 2765
+curl -s 'https://github.blog/wp-json/wp/v2/changelogs?per_page=100&label=2765'
 ```
 
-Per `<item>`: `<title>`, `<link>`, `<pubDate>` (RFC 822 — filter your window on this), `<category>`, and `<content:encoded>` (full HTML). GitHub has no formal ring field; infer lifecycle from title/body wording ("generally available", "public preview", "deprecated", "sunset", "retired").
+Response headers `X-WP-Total` / `X-WP-TotalPages` give the totals; page with `&page=N`. Relevant fields per item:
+
+- `title.rendered`, `link` — headline and URL.
+- `date_gmt` / `modified_gmt` — ISO 8601 UTC (no offset suffix; treat as UTC). Filter your window on `date_gmt`.
+- `content.rendered` — full HTML body.
+- `label` — array of taxonomy term ids (resolve via the `label` endpoint above).
+
+GitHub has no formal ring field; infer lifecycle from title/body wording ("generally available", "public preview", "deprecated", "sunset", "retired").
 
 ## Lifecycle Mapping
 

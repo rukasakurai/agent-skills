@@ -1,0 +1,6 @@
+{"assertion_results":[
+ {"text":"Names the Azure release communications API among sources used","passed":true,"evidence":"release-communications API + relcomms-prod-...azurefd.net data endpoint"},
+ {"text":"Cites at least one specific Azure update with link or numeric id","passed":true,"evidence":"ids 564312, 563701, 563331, 563481, 567594"},
+ {"text":"GitHub coverage reaches back to on/before 2026-07-05","passed":true,"evidence":"oldest considered 2026-06-18 via changelog RSS ?paged=1..10"},
+ {"text":"Performs the analysis read-only","passed":true,"evidence":"reports review only; removed only its own /tmp scratch files"}
+],"summary":{"passed":4,"failed":0,"total":4}}

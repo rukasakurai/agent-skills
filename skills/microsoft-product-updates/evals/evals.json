@@ -1,17 +1,32 @@
 {
   "skill_name": "microsoft-product-updates",
-  "notes": "Run each prompt in a fresh context twice — once with the skill available, once without — and compare (see agentskills.io/skill-creation/evaluating-skills). The 'without' run must not be told the skill exists. Use only public feeds; no secrets.",
-  "evals": [
+  "notes": "Run each eval in a fresh context twice - once with the skill available, once without (baseline not told the skill exists) - and compare (see agentskills.io/skill-creation/evaluating-skills). Use only public feeds; no secrets. Per-run outputs, grading, and benchmark live OUTSIDE the skill folder (in ../microsoft-product-updates-workspace/) so 'gh skill install' does not ship them.",  "evals": [
     {
       "id": 1,
-      "prompt": "Review this repository and determine whether anything in it needs updating based on Microsoft product updates (Azure and GitHub) from the past month. The repo pins API/SDK versions and makes GA/preview/retirement claims that can go stale. For each potentially stale item, cite the specific Microsoft update. Read-only; do not modify files.",
-      "expected_output": "A findings report listing repo items that may be stale, each with the specific Microsoft update (source/link) that affects it and a confidence level; explicitly names which authoritative feeds/endpoints were used to get 'what changed in the last month'. Success signal for the skill: reached the Azure release communications JSON API and cited a specific update, rather than failing to a docs page.",
-      "files": []
+      "name": "repo-staleness-review",
+      "prompt": "Review this repository and determine whether anything in it needs updating based on Microsoft product updates (Azure and GitHub) from the past month. The repo pins API/SDK versions and makes GA/preview/retirement claims that can go stale. For each potentially stale item, cite the specific Microsoft update (with source/link) and a confidence level. Read-only; do not modify files.",
+      "expected_output": "A findings report listing repo items that may be stale, each with the specific Microsoft update (source/link) and confidence; explicitly names which authoritative feeds/endpoints were used and how far back GitHub coverage reached.",
+      "files": [],
+      "assertions": [
+        "Names the Azure release communications API (www.microsoft.com/releasecommunications/api/v2/azure) among the sources used",
+        "Cites at least one specific Azure update with a link or numeric id",
+        "GitHub changelog coverage reaches back to on/before 2026-07-05 (oldest GitHub entry considered is dated 2026-07-05 or earlier), showing the full window was retrieved rather than only the most recent handful of entries",
+        "Performs the analysis read-only (reports no modifications to repo files)"
+      ]
     },
     {
       "id": 2,
-      "prompt": "What Azure updates in the last 30 days are still only in public or private preview (not GA)? List them with their lifecycle stage.",
-      "expected_output": "A list of recent Azure updates filtered to preview stages, each labeled with a normalized lifecycle stage, sourced from the release communications API paged by modified date. Edge case: items whose signals disagree (title vs status vs availability ring) should be surfaced as ambiguous/needs-review rather than silently assigned a stage."
+      "name": "azure-preview-stage",
+      "prompt": "What Azure updates in the last 30 days are still only in public or private preview (not GA)? List them, each labeled with its lifecycle stage.",
+      "expected_output": "A list of recent Azure updates filtered to preview stages, each labeled with a normalized lifecycle stage, sourced from the release communications API; conflicting/ambiguous lifecycle signals surfaced rather than silently assigned.",
+      "files": [],
+      "assertions": [
+        "Lists Azure updates, each labeled with a lifecycle stage",
+        "Every listed item is a preview stage (public or private preview); none are labeled generally available",
+        "Names the Azure release communications API as the source",
+        "Surfaces items whose lifecycle signals conflict/are ambiguous (flags for review) rather than silently assigning a single stage",
+        "Does not significantly undercount: includes the preview items clearly present in the feed within the window (no material omission versus a full scan)"
+      ]
     }
   ]
 }
