@@ -34,6 +34,19 @@ These are authoritative; read the relevant one before committing rather than rep
 - [Evaluating skill output quality](https://agentskills.io/skill-creation/evaluating-skills) — when you cannot tell whether a skill is actually improving responses.
 - [Using scripts in skills](https://agentskills.io/skill-creation/using-scripts) — before adding `scripts/`, or when an operation must be deterministic rather than model-generated.
 
+## Before You Ship (or Change) a Skill
+
+When you are asked to author, evaluate, or change a skill, run the check in this same turn and let its result drive your verdict — do not hand back a verdict in place of the check.
+
+- **Run the with/without comparison now — don't predict it.** Spawn two clean runs of one realistic prompt and compare the *observed* outputs. Predicting "this changes nothing" is the exact failure this step prevents. In this environment a clean run is a fresh headless session:
+  ```bash
+  copilot -p "<task>"                     --session-id "$(uuidgen)" --model <m> --allow-all-tools --no-color   # baseline
+  copilot -p "<SKILL.md body>\n\n<task>"  --session-id "$(uuidgen)" --model <m> --allow-all-tools --no-color   # with skill
+  ```
+  (Agents with subagents, e.g. Claude Code, get the same isolation via child tasks — see the eval doc. Whether the agent runs this autonomously depends on model capability, so drive it with a capable model.) For a repeatable run, this skill bundles [`scripts/ab_eval.sh`](scripts/ab_eval.sh), which spawns both arms of an `evals/evals.json` case into the gitignored workspace. Match effort to the change: one or two prompts is usually enough; reach for a full `evals/` harness only when a quick A/B can't answer the question; for a tiny prose edit, concluding "a harness isn't proportionate here, because…" is fine — but conclude it after looking, don't skip the step.
+- **Decide on cost, not just quality.** A skill spends context tokens (and any bundled-script tool calls) every use, so when quality ties, latency and token/credit cost decide whether it earns its place — sometimes the honest answer is to cut it.
+- **Keep eval artifacts out of the shipped folder.** `gh skill install` copies the *whole* skill directory to consumers, so commit only small, durable files and keep bulky run outputs in a gitignored workspace *beside* the skill (`skills/*-workspace/`), not inside it. What to commit: the `evals/evals.json` spec, and a distilled `evals/benchmark.md` — that exact filename, dated and model-stamped, carrying an "unofficial personal measurement" disclaimer (see `microsoft-product-updates/evals/benchmark.md` for the shape). This is the durable record humans and agents reuse to decide when a skill is worth invoking.
+
 ## Lifecycle
 
 - **Share/install** via [`gh skill install`](https://cli.github.com/manual/gh_skill_install) (e.g. `gh skill install OWNER/REPO <skill> --scope user`).
