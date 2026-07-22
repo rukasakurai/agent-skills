@@ -14,7 +14,7 @@ argument-hint: Name the product area (Azure and/or GitHub) and the date window y
 
 This skill explains how to obtain and read updates. Keep repo-specific cross-referencing (e.g. comparing against pinned Bicep API versions) in the consuming repo.
 
-Cost/latency: using this skill is roughly cost- and latency-neutral versus not using it (it ties on quality while being no more expensive and typically faster) — see `evals/benchmark.md` for measured numbers and their date/model.
+Cost/latency: in a small, dated local eval, using this skill was roughly cost- and latency-neutral versus not using it (it tied on quality while being no more expensive and typically faster) — see `evals/benchmark.md` for the measured numbers, date/model, and caveats. Treat as directional, not a guarantee.
 
 ## Fetching Updates
 
