@@ -1,0 +1,6 @@
+__pycache__/
+
+# Eval run workspaces: local, model/date-specific scratch produced by the
+# with/without eval loop. Kept out of git (only the distilled evals/benchmark.md
+# is committed). Named <skill-name>-workspace/ as a sibling to the skill dir.
+skills/*-workspace/
