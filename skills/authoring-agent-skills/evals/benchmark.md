@@ -13,9 +13,9 @@ number — so this tracks pass/fail versus a no-skill baseline rather than credi
 Method: run the eval prompt in fresh isolated sessions with the skill body in
 context, compare against a no-skill baseline, and check each assertion against
 the observed transcript. `scripts/ab_eval.sh <skill-dir> <eval-id> [model]`
-spawns both arms into the gitignored workspace. See `evals.json` and
-https://agentskills.io/skill-creation/evaluating-skills. Raw runs are local
-scratch in the gitignored `skills/authoring-agent-skills-workspace/`.
+runs each arm from a clean temp dir (so a run can't read this repo's own files
+and leak the answer) and writes transcripts to the gitignored workspace. See
+`evals.json` and https://agentskills.io/skill-creation/evaluating-skills.
 
 ## Results — as of 2026-07-22
 
@@ -37,16 +37,14 @@ command but does not run it, so drive skill evaluation with a capable model.
 Asked where to save eval results, does the agent name `evals/benchmark.md`
 (dated, disclaimed) + a gitignored workspace?
 
-| arm, `claude-haiku-4.5` | names `benchmark.md` | dated/model-stamped | gitignored workspace | unofficial disclaimer | credits |
-| --- | --- | --- | --- | --- | --- |
-| baseline (no skill) | yes* | yes | yes | yes | 3.36 |
-| with skill | yes | yes | yes | yes | 1.28 |
+| arm, `claude-haiku-4.5` | names `benchmark.md` | dated/model-stamped | gitignored workspace | unofficial disclaimer |
+| --- | --- | --- | --- | --- |
+| baseline (no skill) | no (invents a `.json` name) | partial (date, no model) | no | no |
+| with skill | yes | yes | yes | yes |
 
-\*Inside this repo the baseline reached the convention only by reading the
-existing `benchmark.md` files (it ran `find`), so this eval is partly leaked to
-the baseline here; a clean baseline would run outside the repo. The skill's
-value on this eval is efficiency — it states the convention directly, ~2.6×
-cheaper, without filesystem spelunking — not unlocking a new capability.
+Run in isolated temp dirs, so the baseline cannot recover the convention by
+reading this repo's existing files; here the skill unlocks the correct
+convention rather than just doing it faster.
 
 ## How to read this
 
@@ -62,8 +60,8 @@ weak model, expect to run the surfaced command yourself.
 ## Caveats
 
 - Two evals, single run per arm — directional, not statistically robust.
-- The naming/placement eval is partly leaked to the baseline when run inside
-  this repo (the convention is discoverable in existing files); treat its
-  baseline column as a lower bound on the skill's edge.
+- Each arm runs in an isolated temp dir; personal/builtin skills (if any) are
+  still available to both arms equally, but this repo's `skills/` is not an
+  autodiscovery path so the tested skill is delivered only via the prompt.
 - Point-in-time: depends on the models and CLI on the date above. Re-run
   (`scripts/ab_eval.sh`) and update the date/models if you need current behavior.

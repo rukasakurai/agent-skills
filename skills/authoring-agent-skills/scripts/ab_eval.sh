@@ -24,9 +24,14 @@ PY
 WS="$(dirname "$SKILL_DIR")/${NAME}-workspace"
 OUT="$WS/iteration-$(date +%Y%m%d-%H%M%S)-eval${EVAL_ID}"
 mkdir -p "$OUT"
+OUT="$(cd "$OUT" && pwd)"
 echo "skill=$NAME eval=$EVAL_ID model=$MODEL -> $OUT"
 
-run() { copilot -p "$1" --session-id "$(uuidgen)" --model "$MODEL" --allow-all-tools --no-color; }
+# Run each arm from a fresh empty temp dir so it cannot read this repo's files
+# (skills here live in skills/, not an autodiscovery path, so nothing is
+# auto-loaded — but repo cwd would still let a run read the committed SKILL.md
+# and benchmark.md and leak the answer). The skill is delivered via the prompt.
+run() { ( cd "$(mktemp -d)" && copilot -p "$1" --session-id "$(uuidgen)" --model "$MODEL" --allow-all-tools --no-color ); }
 
 { echo "# baseline (no skill)"; run "$PROMPT"; } > "$OUT/baseline.out" 2>&1
 { echo "# with skill"; run "You have this Agent Skill available; apply it when relevant.
