@@ -1,6 +1,6 @@
 {
   "skill_name": "authoring-agent-skills",
-  "notes": "Run each eval in a fresh context twice - once with the skill available, once without (baseline not told the skill exists) - and compare (see agentskills.io/skill-creation/evaluating-skills). Per-run outputs/grading are local scratch in ../authoring-agent-skills-workspace/, which is gitignored (skills/*-workspace/) and never committed. This skill's payoff is behavioral (does the agent act), so assertions check for actions taken (running a measurement, producing evidence), not prose quality.",
+  "notes": "Run each eval in a fresh context twice - once with the skill available, once without (baseline not told the skill exists) - and compare (see agentskills.io/skill-creation/evaluating-skills). Use scripts/ab_eval.sh <skill-dir> <eval-id> [model] to spawn both arms into the gitignored workspace, then grade transcripts against the assertions below. Per-run outputs are local scratch in ../authoring-agent-skills-workspace/ (gitignored via skills/*-workspace/); only the distilled evals/benchmark.md (dated + model-stamped) is committed. This skill's payoff is behavioral (does the agent act), so assertions check for actions taken (running a measurement, producing evidence) and for the artifact conventions the skill teaches, not prose quality.",
   "evals": [
     {
       "id": 1,
@@ -13,6 +13,19 @@
         "Reports concrete observed evidence from that comparison (the differing outputs, or a measured cost/quality delta), not just a hypothesis about what would happen",
         "Reaches a ship-or-cut recommendation that is explicitly justified by the observed result",
         "Flags that this skill largely restates commit conventions the model already knows, and ties that judgment to the measured baseline rather than to inspection alone"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "eval-artifact-naming-and-placement",
+      "prompt": "I just finished evaluating one of my skills and I have the numbers. Where should I save the results, and what should I name the file, so that humans and agents can reuse the numbers later when deciding whether to use the skill?",
+      "expected_output": "Guidance to commit a dated, model-stamped evals/benchmark.md summary (carrying an unofficial/personal-measurement disclaimer) alongside the evals/evals.json spec, while keeping bulky raw run outputs in a gitignored workspace beside the skill (skills/*-workspace/) rather than inside the shipped skill folder.",
+      "files": [],
+      "assertions": [
+        "Recommends committing the summary specifically as evals/benchmark.md (that filename), not an ad-hoc name like results.md",
+        "Says the summary should be dated and model-stamped",
+        "Says bulky raw run outputs belong in a gitignored workspace beside the skill, not inside the shipped folder, because gh skill install copies the whole directory",
+        "Frames the numbers as unofficial/personal measurements rather than authoritative benchmarks"
       ]
     }
   ]

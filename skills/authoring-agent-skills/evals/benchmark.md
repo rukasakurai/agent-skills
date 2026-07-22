@@ -13,14 +13,17 @@ credits.
 
 Method: run the eval prompt in fresh isolated sessions with the skill body in
 context, compare against a no-skill baseline, and check each assertion against
-the observed transcript. See `evals.json` and
+the observed transcript. `scripts/ab_eval.sh <skill-dir> <eval-id> [model]`
+spawns both arms into the gitignored workspace. See `evals.json` and
 https://agentskills.io/skill-creation/evaluating-skills. Raw runs are local
 scratch in the gitignored `skills/authoring-agent-skills-workspace/`.
 
-## Results — as of 2026-07-22 (eval `evaluate-means-measure`)
+## Results — as of 2026-07-22
 
-Question: given this skill and asked to "evaluate a proposed skill", does the
-agent *run* a with/without measurement, or just hypothesize from inspection?
+### Eval `evaluate-means-measure` (does "evaluate" trigger a measurement?)
+
+Given this skill and asked to "evaluate a proposed skill", does the agent *run*
+a with/without measurement, or just hypothesize from inspection?
 
 | arm (skill version, model) | runs the comparison | evidence-grounded | correct ship/cut call |
 | --- | --- | --- | --- |
@@ -28,6 +31,22 @@ agent *run* a with/without measurement, or just hypothesize from inspection?
 | v1-v2 descriptive, `claude-haiku-4.5` | no | no | right, from reasoning |
 | v3 imperative + recipe, `claude-haiku-4.5` | no (surfaces the command) | no | right |
 | v3 imperative + recipe, `claude-sonnet-4.6` | **yes** (ran both sessions) | **yes** (quoted outputs) | right; caught a regression |
+
+### Eval `eval-artifact-naming-and-placement` (does the skill teach the convention?)
+
+Asked where to save eval results, does the agent name `evals/benchmark.md`
+(dated, disclaimed) + a gitignored workspace?
+
+| arm, `claude-haiku-4.5` | names `benchmark.md` | dated/model-stamped | gitignored workspace | unofficial disclaimer | credits |
+| --- | --- | --- | --- | --- | --- |
+| baseline (no skill) | yes* | yes | yes | yes | 3.36 |
+| with skill | yes | yes | yes | yes | 1.28 |
+
+\*Inside this repo the baseline reached the convention only by reading the
+existing `benchmark.md` files (it ran `find`), so this eval is partly leaked to
+the baseline here; a clean baseline would run outside the repo. The skill's
+value on this eval is efficiency — it states the convention directly, ~2.6×
+cheaper, without filesystem spelunking — not unlocking a new capability.
 
 ## How to read this
 
@@ -44,6 +63,9 @@ weak model, expect to run the surfaced command yourself.
 
 ## Caveats
 
-- One eval, single run per arm - directional, not statistically robust.
-- Point-in-time: depends on the models and CLI on the date above. Re-run and
-  update the date/models if you need current behavior.
+- Two evals, single run per arm — directional, not statistically robust.
+- The naming/placement eval is partly leaked to the baseline when run inside
+  this repo (the convention is discoverable in existing files); treat its
+  baseline column as a lower bound on the skill's edge.
+- Point-in-time: depends on the models and CLI on the date above. Re-run
+  (`scripts/ab_eval.sh`) and update the date/models if you need current behavior.
